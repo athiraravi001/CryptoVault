@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'encrypt_screen.dart';
 import 'decrypt_screen.dart';
+import 'file_encrypt_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -30,10 +31,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 8),
               const Text(
                 'Encrypt & hide your secrets inside images.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white38,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.white38),
               ),
               const SizedBox(height: 60),
 
@@ -59,6 +57,20 @@ class HomeScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const DecryptScreen()),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // File Encrypt Card
+              _ActionCard(
+                icon: Icons.folder_special,
+                title: 'Encrypt File',
+                subtitle: 'Encrypt any file and hide it inside an image',
+                color: const Color(0xFFFF6B6B),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FileEncryptScreen()),
                 ),
               ),
 
@@ -136,16 +148,16 @@ class _ActionCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white38,
-                    ),
+                    style: const TextStyle(fontSize: 12, color: Colors.white38),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios,
-                color: color.withOpacity(0.6), size: 16),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: color.withOpacity(0.6),
+              size: 16,
+            ),
           ],
         ),
       ),

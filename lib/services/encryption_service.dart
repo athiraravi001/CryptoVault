@@ -16,9 +16,13 @@ class EncryptionService {
   static Uint8List generateSalt() {
     final secureRandom = FortunaRandom();
     final seedSource = DateTime.now().millisecondsSinceEpoch;
-    secureRandom.seed(KeyParameter(
-      Uint8List.fromList(utf8.encode(seedSource.toString().padRight(32, '0'))),
-    ));
+    secureRandom.seed(
+      KeyParameter(
+        Uint8List.fromList(
+          utf8.encode(seedSource.toString().padRight(32, '0')),
+        ),
+      ),
+    );
     return secureRandom.nextBytes(16);
   }
 
@@ -60,5 +64,33 @@ class EncryptionService {
   // Generate SHA-256 hash of any bytes (for integrity check)
   static String generateHash(Uint8List data) {
     return sha256.convert(data).toString();
+  }
+
+  // Encrypt raw bytes — for file encryption
+  static Uint8List encryptBytes(Uint8List data, String password) {
+    final salt = generateSalt();
+    final key = deriveKey(password, salt);
+    final encKey = enc.Key(key);
+    final iv = enc.IV.fromSecureRandom(16);
+    final encrypter = enc.Encrypter(enc.AES(encKey, mode: enc.AESMode.cbc));
+    final encrypted = encrypter.encryptBytes(data, iv: iv);
+    final combined = Uint8List(16 + 16 + encrypted.bytes.length);
+    combined.setRange(0, 16, salt);
+    combined.setRange(16, 32, iv.bytes);
+    combined.setRange(32, combined.length, encrypted.bytes);
+    return combined;
+  }
+
+  // Decrypt raw bytes — for file decryption
+  static Uint8List decryptBytes(Uint8List data, String password) {
+    final salt = Uint8List.fromList(data.sublist(0, 16));
+    final iv = enc.IV(Uint8List.fromList(data.sublist(16, 32)));
+    final cipherBytes = data.sublist(32);
+    final key = deriveKey(password, salt);
+    final encKey = enc.Key(key);
+    final encrypter = enc.Encrypter(enc.AES(encKey, mode: enc.AESMode.cbc));
+    return Uint8List.fromList(
+      encrypter.decryptBytes(enc.Encrypted(cipherBytes), iv: iv),
+    );
   }
 }
