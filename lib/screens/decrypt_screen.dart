@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/encryption_service.dart';
 import '../services/steganography_service.dart';
@@ -45,15 +46,12 @@ class _DecryptScreenState extends State<DecryptScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      // Step 1: Verify integrity
       final hash = EncryptionService.generateHash(_selectedImageBytes!);
 
-      // Step 2: Extract hidden text from image
       final extractedEncrypted = SteganographyService.extractTextFromImage(
         _selectedImageBytes!,
       );
 
-      // Step 3: Decrypt
       final decrypted = EncryptionService.decryptText(
         extractedEncrypted,
         _passwordController.text,
@@ -99,7 +97,6 @@ class _DecryptScreenState extends State<DecryptScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image picker
             _label('Stego Image'),
             const SizedBox(height: 8),
             GestureDetector(
@@ -127,8 +124,11 @@ class _DecryptScreenState extends State<DecryptScreen> {
                     : const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.image_search,
-                              color: Colors.white24, size: 40),
+                          Icon(
+                            Icons.image_search,
+                            color: Colors.white24,
+                            size: 40,
+                          ),
                           SizedBox(height: 8),
                           Text(
                             'Tap to pick stego image',
@@ -140,7 +140,6 @@ class _DecryptScreenState extends State<DecryptScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Password input
             _label('Password'),
             const SizedBox(height: 8),
             TextField(
@@ -151,7 +150,6 @@ class _DecryptScreenState extends State<DecryptScreen> {
             ),
             const SizedBox(height: 28),
 
-            // Decrypt button
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -177,7 +175,6 @@ class _DecryptScreenState extends State<DecryptScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Status message
             if (_statusMessage != null)
               Container(
                 width: double.infinity,
@@ -196,14 +193,14 @@ class _DecryptScreenState extends State<DecryptScreen> {
                 child: Text(
                   _statusMessage!,
                   style: TextStyle(
-                    color:
-                        _isSuccess ? const Color(0xFF00C896) : Colors.redAccent,
+                    color: _isSuccess
+                        ? const Color(0xFF00C896)
+                        : Colors.redAccent,
                     fontSize: 13,
                   ),
                 ),
               ),
 
-            // Decrypted result
             if (_decryptedText != null) ...[
               const SizedBox(height: 20),
               _label('Decrypted Message'),
@@ -227,6 +224,41 @@ class _DecryptScreenState extends State<DecryptScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: _decryptedText!));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Copied to clipboard'),
+                        backgroundColor: Color(0xFF6C63FF),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  icon: const Icon(
+                    Icons.copy,
+                    color: Color(0xFF6C63FF),
+                    size: 18,
+                  ),
+                  label: const Text(
+                    'Copy to Clipboard',
+                    style: TextStyle(
+                      color: Color(0xFF6C63FF),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF6C63FF)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ],
         ),
@@ -235,31 +267,31 @@ class _DecryptScreenState extends State<DecryptScreen> {
   }
 
   Widget _label(String text) => Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white60,
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
-        ),
-      );
+    text,
+    style: const TextStyle(
+      color: Colors.white60,
+      fontSize: 13,
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.5,
+    ),
+  );
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white24),
-        filled: true,
-        fillColor: const Color(0xFF1A1A1A),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white12),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white12),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF00C896)),
-        ),
-      );
+    hintText: hint,
+    hintStyle: const TextStyle(color: Colors.white24),
+    filled: true,
+    fillColor: const Color(0xFF1A1A1A),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Colors.white12),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Colors.white12),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFF00C896)),
+    ),
+  );
 }
