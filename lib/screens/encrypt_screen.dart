@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import '../services/encryption_service.dart';
 import '../services/steganography_service.dart';
+import 'package:share_plus/share_plus.dart';
 
 class EncryptScreen extends StatefulWidget {
   const EncryptScreen({super.key});
@@ -21,6 +22,7 @@ class _EncryptScreenState extends State<EncryptScreen> {
   bool _isProcessing = false;
   String? _statusMessage;
   bool _isSuccess = false;
+  String? _savedFilePath;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -77,6 +79,7 @@ class _EncryptScreenState extends State<EncryptScreen> {
         'Done! Saved as $fileName\nHash: ${hash.substring(0, 20)}...',
         true,
       );
+      _savedFilePath = outputFile.path;
     } catch (e) {
       _showStatus('Error: ${e.toString()}', false);
     } finally {
@@ -158,8 +161,11 @@ class _EncryptScreenState extends State<EncryptScreen> {
                     : const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.add_photo_alternate,
-                              color: Colors.white24, size: 40),
+                          Icon(
+                            Icons.add_photo_alternate,
+                            color: Colors.white24,
+                            size: 40,
+                          ),
                           SizedBox(height: 8),
                           Text(
                             'Tap to pick cover image',
@@ -223,6 +229,38 @@ class _EncryptScreenState extends State<EncryptScreen> {
                   ),
                 ),
               ),
+
+            // Share button
+            if (_savedFilePath != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Share.shareXFiles([
+                        XFile(_savedFilePath!),
+                      ], text: 'Shared via CryptoVault');
+                    },
+                    icon: const Icon(Icons.share, color: Color(0xFF6C63FF)),
+                    label: const Text(
+                      'Share Stego Image',
+                      style: TextStyle(
+                        color: Color(0xFF6C63FF),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF6C63FF)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -230,31 +268,31 @@ class _EncryptScreenState extends State<EncryptScreen> {
   }
 
   Widget _label(String text) => Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white60,
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
-        ),
-      );
+    text,
+    style: const TextStyle(
+      color: Colors.white60,
+      fontSize: 13,
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.5,
+    ),
+  );
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white24),
-        filled: true,
-        fillColor: const Color(0xFF1A1A1A),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white12),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white12),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF6C63FF)),
-        ),
-      );
+    hintText: hint,
+    hintStyle: const TextStyle(color: Colors.white24),
+    filled: true,
+    fillColor: const Color(0xFF1A1A1A),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Colors.white12),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Colors.white12),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFF6C63FF)),
+    ),
+  );
 }
