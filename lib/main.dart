@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
+import 'screens/lock_screen.dart';
 
 void main() {
   runApp(const CryptoVaultApp());
@@ -21,7 +22,7 @@ class CryptoVaultApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'monospace',
       ),
-      home: const HomeScreen(),
+      home: const LockScreen(),
     );
   }
 }
