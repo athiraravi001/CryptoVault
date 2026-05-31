@@ -3,9 +3,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/encryption_service.dart';
 import '../services/steganography_service.dart';
-import 'package:share_plus/share_plus.dart';
+
+enum PasswordStrength { none, weak, medium, strong }
 
 class EncryptScreen extends StatefulWidget {
   const EncryptScreen({super.key});
@@ -53,22 +55,18 @@ class _EncryptScreenState extends State<EncryptScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      // Step 1: Encrypt text
       final encrypted = EncryptionService.encryptText(
         _textController.text,
         _passwordController.text,
       );
 
-      // Step 2: Hide encrypted text in image
       final stegoImageBytes = SteganographyService.hideTextInImage(
         _selectedImageBytes!,
         encrypted,
       );
 
-      // Step 3: Generate integrity hash
       final hash = EncryptionService.generateHash(stegoImageBytes);
 
-      // Step 4: Save stego image
       final dir = await getDownloadsDirectory();
       final fileName =
           'cryptovault_${DateTime.now().millisecondsSinceEpoch}.png';
@@ -111,7 +109,6 @@ class _EncryptScreenState extends State<EncryptScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Text input
             _label('Secret Text'),
             const SizedBox(height: 8),
             TextField(
@@ -122,7 +119,6 @@ class _EncryptScreenState extends State<EncryptScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Password input
             _label('Password'),
             const SizedBox(height: 8),
             TextField(
@@ -130,10 +126,12 @@ class _EncryptScreenState extends State<EncryptScreen> {
               obscureText: true,
               style: const TextStyle(color: Colors.white),
               decoration: _inputDecoration('Enter encryption password...'),
+              onChanged: (value) => setState(() {}),
             ),
+            const SizedBox(height: 8),
+            _PasswordStrengthBar(password: _passwordController.text),
             const SizedBox(height: 20),
 
-            // Image picker
             _label('Cover Image'),
             const SizedBox(height: 8),
             GestureDetector(
@@ -177,7 +175,6 @@ class _EncryptScreenState extends State<EncryptScreen> {
             ),
             const SizedBox(height: 28),
 
-            // Encrypt button
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -203,7 +200,6 @@ class _EncryptScreenState extends State<EncryptScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Status message
             if (_statusMessage != null)
               Container(
                 width: double.infinity,
@@ -230,7 +226,6 @@ class _EncryptScreenState extends State<EncryptScreen> {
                 ),
               ),
 
-            // Share button
             if (_savedFilePath != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
@@ -295,4 +290,87 @@ class _EncryptScreenState extends State<EncryptScreen> {
       borderSide: const BorderSide(color: Color(0xFF6C63FF)),
     ),
   );
+}
+
+class _PasswordStrengthBar extends StatelessWidget {
+  final String password;
+
+  const _PasswordStrengthBar({required this.password});
+
+  PasswordStrength _getStrength() {
+    if (password.isEmpty) return PasswordStrength.none;
+    if (password.length < 6) return PasswordStrength.weak;
+
+    bool hasUpper = password.contains(RegExp(r'[A-Z]'));
+    bool hasLower = password.contains(RegExp(r'[a-z]'));
+    bool hasDigit = password.contains(RegExp(r'[0-9]'));
+    bool hasSpecial = password.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>]'));
+    bool isLong = password.length >= 12;
+
+    int score = [
+      hasUpper,
+      hasLower,
+      hasDigit,
+      hasSpecial,
+      isLong,
+    ].where((e) => e).length;
+
+    if (score <= 2) return PasswordStrength.weak;
+    if (score <= 3) return PasswordStrength.medium;
+    return PasswordStrength.strong;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final strength = _getStrength();
+    if (strength == PasswordStrength.none) return const SizedBox.shrink();
+
+    final labels = {
+      PasswordStrength.weak: 'Weak',
+      PasswordStrength.medium: 'Medium',
+      PasswordStrength.strong: 'Strong',
+    };
+
+    final colors = {
+      PasswordStrength.weak: Colors.redAccent,
+      PasswordStrength.medium: Colors.orangeAccent,
+      PasswordStrength.strong: const Color(0xFF00C896),
+    };
+
+    final fills = {
+      PasswordStrength.weak: 1,
+      PasswordStrength.medium: 2,
+      PasswordStrength.strong: 3,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: List.generate(3, (index) {
+            final filled = index < (fills[strength] ?? 0);
+            return Expanded(
+              child: Container(
+                margin: const EdgeInsets.only(right: 4),
+                height: 4,
+                decoration: BoxDecoration(
+                  color: filled ? colors[strength] : Colors.white12,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          labels[strength] ?? '',
+          style: TextStyle(
+            fontSize: 11,
+            color: colors[strength],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
 }
